@@ -32,6 +32,7 @@ export default function CheckoutForm({ courseId, courseName, totalAmount }: Chec
     setIsLoading(true)
 
     try {
+      // Create payment invoice with Xendit
       const response = await fetch('/api/payment', {
         method: 'POST',
         headers: {
@@ -43,12 +44,23 @@ export default function CheckoutForm({ courseId, courseName, totalAmount }: Chec
           courseName,
           customerName: formData.name,
           customerEmail: formData.email,
+          customerPhone: formData.phone,
+          customerAddress: formData.address,
         }),
       })
 
       const data = await response.json()
 
       if (data.success && data.invoiceUrl) {
+        // Store checkout data in session storage for enrollment after payment
+        sessionStorage.setItem('checkoutData', JSON.stringify({
+          courseId,
+          customerName: formData.name,
+          customerEmail: formData.email,
+          invoiceId: data.invoiceId,
+          amount: totalAmount
+        }))
+        
         // Redirect to Xendit payment page
         window.location.href = data.invoiceUrl
       } else {
